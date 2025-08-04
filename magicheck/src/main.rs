@@ -3,29 +3,10 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
 
-// Defines the number of bytes to display.
 const DISPLAY_BYTES_LENGTH: usize = 8;
-// Defines the maximum number of bytes to read from the file.
 const READ_BUFFER_SIZE: usize = 40;
 
-/// Identifies a file type based on its magic number.
-///
-/// This function checks the provided byte slice against a known set of magic numbers
-/// to determine the file type. It can check for magic numbers at different offsets.
-///
-/// # Arguments
-///
-/// * `buffer` - A byte slice containing the file's initial bytes.
-///
-/// # Returns
-///
-/// A string slice (`&'static str`) with the name of the file type or
-/// "Unknown magic number" if no match is found.
 fn identify_file_type(buffer: &[u8]) -> &'static str {
-    // The magic number "database" is implemented as a series of `if` checks.
-    // This approach is efficient for a small, fixed set of patterns and handles
-    // variable-length magic numbers cleanly.
-
     if buffer.starts_with(b"-----BEGIN CERTIFICATE-----") {
         "PEM encoded X.509 certificate"
     } else if buffer.starts_with(b"-----BEGIN CERTIFICATE REQUEST-----") {
@@ -605,16 +586,6 @@ fn identify_file_type(buffer: &[u8]) -> &'static str {
     }
 }
 
-/// Reads a chunk of bytes from a file.
-///
-/// # Arguments
-///
-/// * `file_path` - The path to the file to be read.
-///
-/// # Returns
-///
-/// A `Result` containing a `Vec<u8>` with the read bytes, or an `io::Error`
-/// if the file cannot be opened or read.
 fn read_file_chunk(file_path: &Path) -> io::Result<Vec<u8>> {
     let file = File::open(file_path)?;
     let mut buffer = Vec::with_capacity(READ_BUFFER_SIZE);
@@ -622,15 +593,6 @@ fn read_file_chunk(file_path: &Path) -> io::Result<Vec<u8>> {
     Ok(buffer)
 }
 
-/// Converts a byte slice to a space-separated hexadecimal string.
-///
-/// # Arguments
-///
-/// * `bytes` - The byte slice to convert.
-///
-/// # Returns
-///
-/// A `String` containing the hexadecimal representation.
 fn to_hex_string(bytes: &[u8]) -> String {
     bytes
         .iter()
@@ -640,7 +602,6 @@ fn to_hex_string(bytes: &[u8]) -> String {
 }
 
 fn main() {
-    // 1. Input: Get the file path from command-line arguments.
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         eprintln!("Usage: {} <file_path>", args[0]);
@@ -649,23 +610,18 @@ fn main() {
     let file_path_str = &args[1];
     let file_path = Path::new(file_path_str);
 
-    // 2. Byte Reading: Read a chunk of the file to identify the magic number.
     match read_file_chunk(file_path) {
         Ok(file_chunk) => {
-            // 3. Hexadecimal Conversion: Convert the first few bytes to a hex string for display.
             let display_bytes = &file_chunk[..std::cmp::min(file_chunk.len(), DISPLAY_BYTES_LENGTH)];
             let hex_string = to_hex_string(display_bytes);
 
-            // 4. Magic Number Database: Identify the file type.
             let file_type = identify_file_type(&file_chunk);
 
-            // 5. Output: Print the results.
             println!("File Path: {}", file_path_str);
             println!("Magic Bytes (Hex): {}", hex_string);
             println!("Detected File Type: {}", file_type);
         }
         Err(e) => {
-            // 6. Error Handling: Manage file access and reading errors.
             eprintln!("Error processing file '{}': {}", file_path_str, e);
             std::process::exit(1);
         }
